@@ -1,4 +1,5 @@
 using DialogueToTTS.DTO; // for ArrowDialogueParserFormat
+using DialogueToTTS.Utils;
 using System.Collections; // for IEnumerable
 using System.Linq; // for ToList() 
 using System.Diagnostics; // for ProcessStartInfo
@@ -12,7 +13,9 @@ namespace DialogueToTTS
         readonly string filename;
         readonly string path;
 
-        public DialogueToTTS(string filename, string path = null)
+        readonly bool useCuda;
+
+        public DialogueToTTS(string filename, string path = null, bool useCuda = false)
         {
             this.filename = filename;
             if (path == null)
@@ -20,12 +23,13 @@ namespace DialogueToTTS
                 path = Directory.GetCurrentDirectory() + "/output/";
             }
             else { this.path = path; }
+            this.useCuda = useCuda;
 
         }
 
         public bool Run()
         {
-            log("Starting Process");
+            Logs.Log("Starting Process");
             ProcessStartInfo temp;
             var rows = GetDataTable(filename);
             if (rows != null)
@@ -47,7 +51,7 @@ namespace DialogueToTTS
                                 "--text \"" + row.Text + "\" " +
                                 chooseModel(row.Voice) + chooseVocoder(row.Voice) +
                                 "--out_path " + path + "/" + id[0] + "/" + id[1] + ".wav "
-                            //+"--use-cuda "+"true",
+                                + "--use_cuda " + useCuda,
 
                         };
                         Process.Start(temp).WaitForExit();
@@ -56,7 +60,7 @@ namespace DialogueToTTS
             }
             else
             {
-                log("No Rows Found");
+                Logs.Log("No Rows Found");
             }
             return true;
         }
@@ -91,7 +95,7 @@ namespace DialogueToTTS
 
         private IEnumerable GetDataTable(string filepath)
         {
-            log("Reading Datatable from: " + filepath);
+            Logs.Log("Reading Datatable from: " + filepath);
             try
             {
                 using (var reader = new StreamReader(filepath))
@@ -102,19 +106,13 @@ namespace DialogueToTTS
             }
             catch (DirectoryNotFoundException)
             {
-                log("Directory not found");
+                Logs.Log("Directory not found");
             }
             catch (System.Exception ex)
             {
-                log("Generic Exception:" + ex.ToString());
+                Logs.Log("Generic Exception:" + ex.ToString());
             }
             return null;
-        }
-
-        // TODO: make a logger
-        private void log(string log, [System.Runtime.CompilerServices.CallerMemberName] string functionName = "")
-        {
-            System.Console.WriteLine("LOG: [" + functionName + "]: " + log);
         }
 
     }

@@ -1,4 +1,5 @@
 {
-        "defaultcsv": "/home/gabuscuv/git/VRProject/GDD/GameScriptExported.csv",
-        "outputPath":"/home/gabuscuv/git/VRProject/FMODProject/LocalizedAudio/EN/"
+        "DefaultCsv": "/home/gabuscuv/git/VRProject/GDD/GameScriptExported.csv",
+        "OutputPath":"/home/gabuscuv/git/VRProject/FMODProject/LocalizedAudio/EN/",
+        "UseCuda": true
 }
