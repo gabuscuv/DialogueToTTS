@@ -1,4 +1,4 @@
-﻿using System;
+﻿//using System;
 using System.IO;
 using DialogueToTTS.Utils;
 using CommandLine;
@@ -14,12 +14,14 @@ namespace DialogueToTTS
             public string Filename { get; set; }
             [Option('o', "output", Required = false, HelpText = "Set folder output for audiofiles")]
             public string OutputFolder { get; set; }
-            [Option('c', "csv", Required = false, HelpText = "Set true or false for use Cuda")]
+            [Option('c', "cuda", Required = false, HelpText = "Set true or false for use Cuda")]
             public bool UseCuda { get; set; }
         }
 
         static void Main(string[] args)
         {
+            if (!CommandExists.ExistsOnPath("tts")){ Logs.Log("TTS is not installed or detected, Please Check if you have installed TTS or is included in PATH environment variable"); return; }
+
             if (args.Length != 0)
             {
                 Parser.Default.ParseArguments<Options>(args)
@@ -48,7 +50,7 @@ namespace DialogueToTTS
         {
             if (File.Exists(Directory.GetCurrentDirectory() + "/config.json"))
             {
-                Logs.Log("Reading config file:" + Directory.GetCurrentDirectory() + "/config.json");
+                Logs.Log(("Reading config file:" + Directory.GetCurrentDirectory() + "/config.json"));
                 var config = JObject.Parse(File.ReadAllText(Directory.GetCurrentDirectory() + "/config.json")).ToObject<DTO.Config>();
                 if (config != null)
                 {

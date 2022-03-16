@@ -4,6 +4,7 @@ using System.Collections; // for IEnumerable
 using System.Linq; // for ToList() 
 using System.Diagnostics; // for ProcessStartInfo
 using System.IO;
+using System.Text.RegularExpressions;
 
 
 namespace DialogueToTTS
@@ -12,8 +13,9 @@ namespace DialogueToTTS
     {
         readonly string filename;
         readonly string path;
-
         readonly bool useCuda;
+
+//        System.Text.RegularExpressions.Regex regex;
 
         public DialogueToTTS(string filename, string path = null, bool useCuda = false)
         {
@@ -24,7 +26,6 @@ namespace DialogueToTTS
             }
             else { this.path = path; }
             this.useCuda = useCuda;
-
         }
 
         public bool Run()
@@ -32,36 +33,34 @@ namespace DialogueToTTS
             Logs.Log("Starting Process");
             ProcessStartInfo temp;
             var rows = GetDataTable(filename);
-            if (rows != null)
+
+            if (rows == null) { Logs.Log("No Rows Found"); return false; }
+
+            foreach (ArrowDialogueParserFormat row in rows)
             {
-                foreach (ArrowDialogueParserFormat row in rows)
+                if (row.DialogueWaveId.Contains("#"))
                 {
-                    if (row.DialogueWaveId.Contains("#"))
+                    var id = row.DialogueWaveId.Split("#");
+                    if (!Directory.Exists(path + "/" + id[0]))
                     {
-                        var id = row.DialogueWaveId.Split("#");
-                        if (!Directory.Exists(path + "/" + id[0]))
-                        {
-                            Directory.CreateDirectory(path + "/" + id[0]);
-                        }
-
-                        temp = new ProcessStartInfo()
-                        {
-                            FileName = "tts",
-                            Arguments =
-                                "--text \"" + row.Text + "\" " +
-                                chooseModel(row.Voice) + chooseVocoder(row.Voice) +
-                                "--out_path " + path + "/" + id[0] + "/" + id[1] + ".wav "
-                                + "--use_cuda " + useCuda,
-
-                        };
-                        Process.Start(temp).WaitForExit();
+                        Directory.CreateDirectory(path + "/" + id[0]);
                     }
+
+                    temp = new ProcessStartInfo()
+                    {
+                        FileName = "tts",
+                        Arguments =
+                            "--text \"" + formatting(row.Text) + "\" " +
+                            chooseModel(row.Voice) + chooseVocoder(row.Voice) +
+                            "--use_cuda " + useCuda + " " +
+                            "--out_path " + path + "/" + id[0] + "/" + id[1] + ".wav "
+
+
+                    };
+                    Process.Start(temp).WaitForExit();
                 }
             }
-            else
-            {
-                Logs.Log("No Rows Found");
-            }
+
             return true;
         }
 
@@ -113,6 +112,12 @@ namespace DialogueToTTS
                 Logs.Log("Generic Exception:" + ex.ToString());
             }
             return null;
+        }
+
+        private string formatting(string text)
+        {
+            text = Regex.Replace(text, "/\\.{2,}/g", ".");
+            return text;
         }
 
     }
